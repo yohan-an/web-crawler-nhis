@@ -22,11 +22,11 @@ def main():
     # 필요한 작업 수행
     driver.get("https://www.nhis.or.kr/nhis/index.do")
 
-    nextUrl = 'https://www.nhis.or.kr/nhis/etc/personalLoginPage.do'
+    next_url = 'https://www.nhis.or.kr/nhis/etc/personalLoginPage.do'
 
-    driver.get(nextUrl)
+    driver.get(next_url)
 
-    time.sleep(2)
+    time.sleep(0.5)
 
     # login
     login(driver)
@@ -38,11 +38,13 @@ def main():
     certificateComplate(driver)
 
     # 결과
-    retrieveHealthinCheckUpTargetResult(driver)
+    retrieve_healthin_checkUp_target_result(driver)
 
-    time.sleep(10)
+    # 결과 다운로드
+    health_result_download(driver)
+
     # 브라우저 닫기
-    driver.quit()
+    # driver.quit()
 
 
 def login(driver):
@@ -107,7 +109,7 @@ def certificateComplate(driver):
 
     from selenium.webdriver.support import expected_conditions as EC
 
-    wait = WebDriverWait(driver, 10)
+    wait = WebDriverWait(driver, 3)
     certificate = False
     while not certificate:
         time.sleep(2)
@@ -115,38 +117,118 @@ def certificateComplate(driver):
         try:
             # 인증완료 버튼 버튼
             confirm_button = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, "button.basic.sky.w70")))
-            print("1")
             if confirm_button:
                 confirm_button.click()
             else:
-                print('break ! ')
                 break
 
         except (TimeoutException, NoSuchElementException):
             print("no search confirm button  - 1")
+        except Exception as e:
             break
 
         try:
             # Alert 버튼 찾기
             alert_button = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, "div.btnArea button.pop.sky.full")))
-            print("2")
             if alert_button:
                 alert_button.click()
             else:
                 certificate = True
-                print('break !! ')
                 break
 
         except (TimeoutException, NoSuchElementException):
             print("no search alert button  - 2")
+        except Exception as e:
             break
 
 
-def retrieveHealthinCheckUpTargetResult(driver):
+def retrieve_healthin_checkUp_target_result(driver):
     """
         개인정보 조회
     """
+    captcha_processing_loop(driver)
 
+
+
+def health_result_download(driver):
+
+    # 검진결과보기 이동
+    driver.get("https://www.nhis.or.kr/nhis/healthin/retrieveHealthinCheckUpTargetResultAllPerson.do")
+
+    wait = WebDriverWait(driver, 10)
+
+    from selenium.webdriver.support import expected_conditions as EC
+    xml_download_button = wait.until(
+        EC.presence_of_element_located((By.CSS_SELECTOR, "a.button.medium.border[rel='modal:open']"))
+    )
+    xml_download_button.click()
+
+    # 기본 URL 설정
+    base_url = "https://www.nhis.or.kr"
+    download_url = f"{base_url}/nhis/healthin/retrieveCrryy10Dnlod.do"
+
+    session = requests.Session()
+    for cookie in driver.get_cookies():
+        session.cookies.set(cookie['name'], cookie['value'])
+
+    print("session : ", session)
+
+    # 파일 다운로드
+    response = requests.get(download_url)
+
+    # 요청이 성공하면 파일로 저장
+    if response.status_code == 200:
+        with open("downloaded_file.xml", "wb") as file:
+            file.write(response.content)
+        print("파일이 성공적으로 다운로드되어 저장되었습니다.")
+    else:
+        print(f"파일 다운로드 실패. 상태 코드: {response.status_code}")
+
+
+
+
+
+def captcha_processing_loop(driver):
+    max_retry = 200
+    from selenium.webdriver.support import expected_conditions as EC
+    while max_retry > 0:
+
+        print(".", end="", flush=True)
+
+        captcha_text = captcha_processing(driver)
+        captcha_confirm_button = WebDriverWait(driver, 1).until(
+            EC.presence_of_element_located((By.CSS_SELECTOR, "a.button.large.red"))
+        )
+
+        captcha_input = WebDriverWait(driver, 1).until(
+            EC.presence_of_element_located((By.ID, "captcha"))
+        )
+
+        captcha_input.send_keys(captcha_text)
+
+        try:
+            if captcha_confirm_button:
+                captcha_confirm_button.click()
+            else:
+                break
+        except Exception:
+            print("no search confirm button - captcha")
+
+        # URL이 변경되었는지 확인하여 성공 시 종료
+        try:
+            WebDriverWait(driver, 3).until(
+                EC.presence_of_element_located((By.LINK_TEXT, "검진결과 한눈에 보기"))
+            )
+            print("\nCAPTCHA 성공! 페이지가 이동되었습니다.")
+            break
+        except:
+            print("\n요소를 찾지 못했습니다. 다시 시도합니다.")
+
+        # 재시도 횟수 감소
+        max_retry -= 1
+
+
+def captcha_processing(driver):
     image_file_name = "captcha_screenshot.png"
 
     driver.get('https://www.nhis.or.kr/nhis/healthin/retrieveHealthinCheckUpTargetResultPerson.do')
@@ -169,8 +251,8 @@ def retrieveHealthinCheckUpTargetResult(driver):
 
     # OCR을 통해 이미지에서 텍스트 추출
     captcha_text = opencv_captcha("./", image_file_name)
-
     print("CAPTCHA 텍스트:", captcha_text)
+
     return captcha_text
 
 
@@ -188,13 +270,13 @@ def opencv_captcha(image_path="", image_name=""):
     _, image = cv2.threshold(image, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
 
     # 전처리된 이미지 확인 (디버그용)
-    cv2.imshow('Processed Image', image)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
+    # cv2.imshow('Processed Image', image)
+    # cv2.waitKey(0)
+    # cv2.destroyAllWindows()
 
     # Tesseract로 텍스트 추출
     text = pytesseract.image_to_string(image, config='--psm 6')
-    print("추출된 텍스트:", text)
+    return text
 
 
 def image_stream_download(captcha_url, filename="processed_captcha.png"):
@@ -216,7 +298,7 @@ def capture_element(driver, element, save_path="element_screenshot.png"):
     """
     # 특정 요소 캡처해서 이미지 파일로 저장
     element.screenshot(save_path)
-    print(f"요소 캡처 완료: {save_path}")
+    #print(f"요소 캡처 완료: {save_path}")
 
 
 def preprocess_image(img):
