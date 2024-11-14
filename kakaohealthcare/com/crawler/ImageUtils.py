@@ -1,19 +1,7 @@
-import time
-
-import cv2
-import pytesseract
-from PIL import Image, ImageEnhance, ImageFilter
-import requests
 from io import BytesIO
 
-from matplotlib import pyplot as plt
-from requests.utils import dict_from_cookiejar
-from selenium import webdriver
-from selenium.common import TimeoutException, NoSuchElementException
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.wait import WebDriverWait
-from webdriver_manager.chrome import ChromeDriverManager
+import requests
+from PIL import Image, ImageEnhance, ImageFilter
 
 
 class ImageUtils(object):
@@ -23,7 +11,7 @@ class ImageUtils(object):
 
     def preprocess_image(self,  captcha_element):
         """
-            테서렉트에 대한 기본 - 이미지 전처리 (노이즈제거)
+            PIL 기본 이미지 전처리 (노이즈제거)
         :param img:
         :return:
         """

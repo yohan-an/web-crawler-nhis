@@ -1,25 +1,15 @@
-import os
-import sys
-import time
+from io import BytesIO
 
 import cv2
 import pytesseract
-from PIL import Image, ImageEnhance, ImageFilter
 import requests
-from io import BytesIO
-
+from PIL import Image
 from matplotlib import pyplot as plt
-from requests.utils import dict_from_cookiejar
-from selenium import webdriver
-from selenium.common import TimeoutException, NoSuchElementException
-from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.wait import WebDriverWait
-from webdriver_manager.chrome import ChromeDriverManager
 
 from kakaohealthcare.com.conf.Const import Const
 from kakaohealthcare.com.crawler.ImageUtils import ImageUtils
-
 
 
 class Captcha(object):
