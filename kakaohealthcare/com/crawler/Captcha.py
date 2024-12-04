@@ -7,7 +7,6 @@ from PIL import Image
 from matplotlib import pyplot as plt
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.wait import WebDriverWait
-
 from kakaohealthcare.com.conf.Const import Const
 from kakaohealthcare.com.crawler.ImageUtils import ImageUtils
 

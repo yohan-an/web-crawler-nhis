@@ -48,11 +48,11 @@ class Login :
                 print('텍스트가 일치하지 않습니다.')
 
             input_box = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, 'input[data-id="oacx_name"]')))
-            input_box.send_keys("안상길")
+            input_box.send_keys("")
             input_box = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, 'input[data-id="oacx_birth"]')))
-            input_box.send_keys("19831015")
+            input_box.send_keys("")
             input_box = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, 'input[data-id="oacx_phone2"]')))
-            input_box.send_keys('30211502')
+            input_box.send_keys('')
 
             checkbox = wait.until(EC.presence_of_element_located((By.ID, "totalAgree")))
             if not checkbox.is_selected():
