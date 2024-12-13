@@ -115,7 +115,7 @@ class Captcha(object):
         index = 0
         while max_retry > 0:
 
-            print(".", end="", flush=True)
+            #print(".", end="", flush=True)
             captcha = Captcha()
 
             captcha_text = captcha.captcha_processing(driver)
